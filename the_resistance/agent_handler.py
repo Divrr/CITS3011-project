@@ -65,7 +65,7 @@ class AgentHandler(Agent):
         # apply a time limit to the agent performing new_game
         self.time_limit(self.agent.new_game, number_of_players, player_number, spy_list)
 
-    def propose_mission(self, team_size, betrayals_required=1):
+    def propose_mission(self, team_size, betrayals_required):
         # apply a time limit to the agent performing propose_mission
         result = self.time_limit(self.agent.propose_mission, team_size, betrayals_required)
 

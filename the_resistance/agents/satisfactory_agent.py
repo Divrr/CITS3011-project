@@ -36,7 +36,7 @@ class SatisfactoryAgent(Agent):
             return self.player_number in self.spies
         return player_num in self.spies
 
-    def propose_mission(self, team_size, betrayals_required=1):
+    def propose_mission(self, team_size, betrayals_required):
         '''
         expects a team_size list of distinct agents with id between 0 (inclusive) and number_of_players (exclusive)
         to be returned. 
@@ -77,7 +77,7 @@ class SatisfactoryAgent(Agent):
         random.shuffle(team)
         return team
 
-    def vote(self, mission, proposer, betrayals_required=1):
+    def vote(self, mission, proposer, betrayals_required):
         '''
         mission is a list of agents to be sent on a mission. 
         The agents on the mission are distinct and indexed between 0 and number_of_players.
@@ -128,7 +128,7 @@ class SatisfactoryAgent(Agent):
         # nothing to do here
         pass
 
-    def betray(self, mission, proposer, betrayals_required=1):
+    def betray(self, mission, proposer, betrayals_required):
         '''
         mission is a list of agents to be sent on a mission. 
         The agents on the mission are distinct and indexed between 0 and number_of_players, and include this agent.
