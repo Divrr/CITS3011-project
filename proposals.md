@@ -18,3 +18,6 @@ Understand who has what knowledge and why people would act how they do. ??
 
 # The collaborator
 This tactic involves understanding the other players' tactics and collaborating with that information
+
+# THE MINIMAX
+YOU CAN ASSUME THERE IS AN AGENT THAT IS EVERY OTHER AGENT AND YOU CAN MINIMAX THAT.
