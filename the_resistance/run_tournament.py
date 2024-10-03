@@ -7,7 +7,7 @@ from agent_handler import AgentHandler
 # Important: Make sure you put your agents in the agents folder, so that the
 # game runner code can find them.
 
-NUMBER_OF_GAMES = 1000
+NUMBER_OF_GAMES = int(input())
 
 # set this to true if you want to see what happens in every game
 PRINT_GAME_EVENTS = False
