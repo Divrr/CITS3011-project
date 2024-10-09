@@ -22,19 +22,13 @@ class Seth(Agent):
         self.votes = []
 
     def propose_mission(self, team_size, betrayals_required):
-        choice = []
+        top_trusted = sorted(range(len(self.trust)), key=lambda i: -self.trust[i])
         if self.spy:
-            pool = self.players.copy()
-            random.shuffle(pool)
-            
-            spies = [player for player in pool if player in self.spies and player != self.id]
-            non_spies = [player for player in pool if player not in self.spies and player != self.id]
-
+            spies = [player for player in top_trusted if player in self.spies and player != self.id]
+            non_spies = [player for player in top_trusted if player not in self.spies and player != self.id]
             choice = [self.id] + spies[:betrayals_required-1] + non_spies[:team_size - len(spies)+ 1]
         else:
-            priority = sorted([(i, score) for i, score in enumerate(self.trust)], key=lambda x: -x[1])
-            top = [i for i, score in priority[:team_size]]
-            choice.extend(top)
+            choice = top_trusted[:team_size]
         
         random.shuffle(choice)
         return choice
