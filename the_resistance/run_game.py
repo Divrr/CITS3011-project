@@ -53,7 +53,7 @@ for agent_cls in agent_classes:
         agent_pool.append(create_agent(agent_cls))
 
 # run the games
-number_of_players = random.randint(5, 10)
+number_of_players = 5
 agents = random.sample(agent_pool, number_of_players)
 
 if duplicates_exist:

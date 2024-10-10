@@ -12,7 +12,7 @@ class Adam(Agent):
         return self.__str__()
 
     def new_game(self, number_of_players, player_number, spies):
-        self.players = list(range(0, number_of_players))
+        self.players = list(range(number_of_players))
         self.spies = spies
 
         self.id = player_number

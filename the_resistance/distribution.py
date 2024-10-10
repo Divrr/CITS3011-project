@@ -15,7 +15,7 @@ tournament_arena_dir = "agents/"
 tournament_sideline_dir = "sideline/"
 png_dir = "-png/"
 agent_file = "2Seth.py"
-NUM_PLAYS = 2
+NUM_PLAYS = 30
 NUM_HIST_BINS = 100
 
 # =============================
@@ -39,7 +39,6 @@ for i in range(len(contestants)+1):
     combinations += list(itertools.combinations(contestants, i))
 
 combinations.remove(())
-print(combinations)
 
 # =============================
 
@@ -69,10 +68,10 @@ def run_tournament(agent, contestants):
     return ranking, [total_winrate, res_win_rate, spy_win_rate]
 
 def get_distribution(agent, contestants):
-    print(contestants)
     total_winrate, res_win_rate, spy_win_rate = [], [], []
     rankings = []
-    for _ in range(NUM_PLAYS):
+    print(contestants)
+    for _ in tqdm(range(NUM_PLAYS), desc=f""):
         ranking, winrate = run_tournament(agent, contestants)
         total_winrate.append(winrate[0])
         res_win_rate.append(winrate[1])
@@ -83,7 +82,7 @@ def get_distribution(agent, contestants):
 
 # =============================
 
-for contestants in tqdm(combinations, desc=f"Tournament {combinations}"):
+for contestants in combinations:
     rankings, winrates = get_distribution(agent, contestants)
     total_winrates, res_win_rates, spy_win_rates = winrates
 
@@ -109,6 +108,3 @@ for contestants in tqdm(combinations, desc=f"Tournament {combinations}"):
     
     plt.savefig(os.path.join(png_dir, 'winrate_distribution_{}.png'.format('_'.join(contestants))))
     plt.close()
-
-    print("Average winrate: {}".format(np.mean(winrates)))
-    print("Average ranking: {}".format(np.mean(rankings)))
