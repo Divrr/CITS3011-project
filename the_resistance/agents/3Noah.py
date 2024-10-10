@@ -21,7 +21,6 @@ class Noah(Agent):
         self.spy = True if self.spies else False
         self.id = player_number
 
-        if self.spy:print(spies)
         self.possible_worlds = {
             player:{
                 world: 0 if player in world else 1
@@ -30,10 +29,6 @@ class Noah(Agent):
         }
 
         self.aggregate_trust = {player: 0 for player in self.players}
-        for player in self.possible_worlds:
-            for world in self.possible_worlds[player]:
-                for agent in world:
-                    self.aggregate_trust[agent] += self.possible_worlds[player][world]
 
     def propose_mission(self, team_size, betrayals_required):
         trust_buckets = {i: [] for i in self.aggregate_trust.values()}
@@ -50,8 +45,6 @@ class Noah(Agent):
             for player in players:
                 if len(choice) == team_size: break
                 choice.append(player)
-        
-        print(trust_buckets)
         return choice
 
     def vote(self, mission, proposer, betrayals_required):
@@ -64,32 +57,23 @@ class Noah(Agent):
         pass
 
     def mission_outcome(self, mission, proposer, num_betrayals, mission_success):
-        if mission_success:
-            print(f"\033[92m", end="")
-        else:
-            print(f"\033[91m", end="")
-        print(mission)
-        
+        self.aggregate_trust = {player: 0 for player in self.players}
+
         for player in self.players:
-            if not mission_success:
-                # Reduce any combination that does not include at least num_betrayals spies in the subset down to 0
-                for world in self.possible_worlds[player]:
+            for world in self.possible_worlds[player]:
+                if not mission_success:
+                    # Reduce any combination that does not include at least num_betrayals spies in the subset down to 0
                     # if the subset WAS spies, how many got into the mission?
                     num_spies_on_mission = sum(1 for agent in world if agent in mission)
                     # if the numbers don't add up, that world is not correct
                     if num_spies_on_mission < num_betrayals:
                         self.possible_worlds[player][world] = 0
-        
-        self.aggregate_trust = {player: 0 for player in self.players}
-        for player in self.possible_worlds:
-            for world in self.possible_worlds[player]:
+                
                 for agent in world:
                     self.aggregate_trust[agent] += self.possible_worlds[player][world]
-        
-        print(self.aggregate_trust)
 
     def round_outcome(self, rounds_complete, missions_failed):
-        print(f"======={rounds_complete, missions_failed}=======")
+        pass
     
     def game_outcome(self, spies_win, spies):
         pass

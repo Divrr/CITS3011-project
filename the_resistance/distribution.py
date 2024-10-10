@@ -14,8 +14,10 @@ tournament_judge_file = "run_tournament.py"
 tournament_arena_dir = "agents/"
 tournament_sideline_dir = "sideline/"
 png_dir = "-png/"
-agent_file = "2Seth.py"
-NUM_PLAYS = 30
+agent_file = "3Noah.py"
+agent_name = "Noah"
+NUM_PLAYS = 100
+NUM_TOURNAMENTS = 30
 NUM_HIST_BINS = 100
 
 # =============================
@@ -46,17 +48,17 @@ def run_tournament(agent, contestants):
     for contestant in contestants:
         shutil.copyfile(os.path.join(sideline, contestant), os.path.join(arena, contestant))
         
-    result = subprocess.run(["python3", judge], input='1000\n', capture_output=True, text=True, check=False)
+    result = subprocess.run(["python3", judge], input=str(NUM_PLAYS)+"\n", capture_output=True, text=True, check=False)
     stdout = result.stdout
     stderr = result.stderr
 
     coming = False
     total_winrate, res_win_rate, spy_win_rate, ranking = 0, 0, 0, 0
     for line in stdout.split("\n"):
-        if "LEADERBOARD AFTER 1000" in line:
+        if "LEADERBOARD AFTER "+str(NUM_PLAYS) in line:
             coming = True
         if coming:
-            if "Seth" in line:
+            if agent_name in line:
                 total_winrate = float(line.split()[3].split("=")[1])
                 res_win_rate = float(line.split()[4].split("=")[1])
                 spy_win_rate = float(line.split()[5].split("=")[1])
@@ -64,14 +66,14 @@ def run_tournament(agent, contestants):
     
     for contestant in contestants:
         os.remove(os.path.join(arena, contestant))
-    
+
     return ranking, [total_winrate, res_win_rate, spy_win_rate]
 
 def get_distribution(agent, contestants):
     total_winrate, res_win_rate, spy_win_rate = [], [], []
     rankings = []
     print(contestants)
-    for _ in tqdm(range(NUM_PLAYS), desc=f""):
+    for _ in tqdm(range(NUM_TOURNAMENTS), desc=f""):
         ranking, winrate = run_tournament(agent, contestants)
         total_winrate.append(winrate[0])
         res_win_rate.append(winrate[1])
@@ -106,5 +108,5 @@ for contestants in combinations:
     avg_rankng = np.mean(rankings)
     plt.figtext(0.5, 0.01, f'avg Total Winrate: {avg_total_winrate:.2f}, avg Resistance Winrate: {avg_res_winrate:.2f}, avg Spy Winrate: {avg_spy_winrate:.2f}, avg ranking: {avg_rankng:.2f}', ha='center', fontsize=8, alpha=0.5)
     
-    plt.savefig(os.path.join(png_dir, 'winrate_distribution_{}.png'.format('_'.join(contestants))))
+    plt.savefig(os.path.join(png_dir, f'{agent_name}_{'_'.join(contestants)}.png'))
     plt.close()
