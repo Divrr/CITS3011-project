@@ -21,3 +21,8 @@ This technique hard-codes the concept of trust.
 We assign a trust value of 1 to each agent. This represents the fact that we trust every agent initially.
 If a mission fails, we reduce our trust of the proposer, players in the mission, and players who voted for the mission.
 We pick and vote for the players who we trust most.
+
+# Technique 2: Noah
+Why multi-agent mapping was not necessary.
+Realising 1 is not a good 'probability'. The better starting probability is 1/(n-1 choose num_spies)
+How to calculate odds
