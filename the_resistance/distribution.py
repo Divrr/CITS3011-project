@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from matplotlib.table import Table
+import colorsys
 
 # =============================
 
@@ -98,8 +99,14 @@ agent_files = [f for f in os.listdir(hero) if f.endswith(".py")]
 agent_names = [os.path.splitext(f)[0] for f in agent_files]  # Extract agent names from filenames
 import matplotlib.colors as mcolors
 
-# Generate a list of colors
-colors = list(mcolors.TABLEAU_COLORS.values())
+# Generate a list of base colors
+base_colors = list(mcolors.TABLEAU_COLORS.values())
+
+def adjust_color_hue(color, factor):
+    rgb = mcolors.to_rgb(color)
+    hsv = colorsys.rgb_to_hsv(*rgb)
+    adjusted_hsv = (hsv[0] + factor) % 1.0, hsv[1], hsv[2]
+    return colorsys.hsv_to_rgb(*adjusted_hsv)
 
 for contestants in combinations:
     plt.figure(figsize=(10, 6))
@@ -109,13 +116,16 @@ for contestants in combinations:
         rankings, winrates = get_distribution(agent_file, agent_name, contestants)
         total_winrates, res_win_rates, spy_win_rates = winrates
 
-        color = colors[idx % len(colors)]  # Cycle through colors
+        base_color = base_colors[idx % len(base_colors)]  # Cycle through base colors
+        total_color = adjust_color_hue(base_color, 0.00)  # No hue adjustment for total winrate
+        res_color = adjust_color_hue(base_color, -0.02)    # Slight hue adjustment for resistance winrate
+        spy_color = adjust_color_hue(base_color, 0.02)    # Slight hue adjustment for spy winrate
 
-        plt.hist(total_winrates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Total Winrate', range=(0, 1), color=color)
-        plt.hist(res_win_rates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Resistance Winrate', range=(0, 1), color=color)
-        plt.hist(spy_win_rates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Spy Winrate', range=(0, 1), color=color)
+        plt.hist(total_winrates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Total Winrate', range=(0, 1), color=total_color)
+        plt.hist(res_win_rates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Resistance Winrate', range=(0, 1), color=res_color)
+        plt.hist(spy_win_rates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Spy Winrate', range=(0, 1), color=spy_color)
 
-        avg_winrates.append([agent_name, np.mean(total_winrates), np.mean(res_win_rates), np.mean(spy_win_rates)])
+        avg_winrates.append([agent_name, np.mean(total_winrates), np.mean(res_win_rates), np.mean(spy_win_rates), np.mean(rankings)])
 
     plt.axvline(0.5, color='purple', linestyle='dotted', linewidth=1, label='50% Winrate')
 
@@ -123,13 +133,13 @@ for contestants in combinations:
     plt.xlabel('Winrate')
     plt.ylabel('Frequency')
 
-    # Add a table showing average winrates
-    table_data = [['Agent', 'Avg Total Winrate', 'Avg Resistance Winrate', 'Avg Spy Winrate']] + avg_winrates
-    table = Table(plt.gca(), bbox=[0, -0.3, 1, 0.2])
-    for i, row in enumerate(table_data):
-        for j, cell in enumerate(row):
-            table.add_cell(i, j, width=1/4, height=0.1, text=cell, loc='center')
-    plt.gca().add_table(table)
+    # Add legends for winrates and ranks
+    winrate_legend = "\n".join([f'{agent_name}: Total={total:.2f}, Res={res:.2f}, Spy={spy:.2f}' for agent_name, total, res, spy, _ in avg_winrates])
+    rank_legend = "\n".join([f'{agent_name}: Avg Rank={rank:.2f}' for agent_name, _, _, _, rank in avg_winrates])
+    plt.figtext(0.99, 0.01, winrate_legend, horizontalalignment='right', fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
+    plt.figtext(0.01, 0.01, rank_legend, horizontalalignment='left', fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
+
+    plt.legend(loc='upper right')
 
     plt.savefig(os.path.join(png_dir, f'comparison_{"_".join([agent_name for agent_name in agent_names])}_against_{"_".join(contestants)}.png'))
     plt.close()
