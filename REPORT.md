@@ -28,3 +28,16 @@ Realising 1 is not a good 'probability'. The better starting probability is 1/(n
 How to calculate odds
 
 explain that you always want to pick the most trusted crew. 
+
+```py
+        spy_threshold = 0.7
+        if self.spy_probability(proposer) > spy_threshold:
+            return False
+
+        for member in mission:
+            if self.spy_probability(member) > spy_threshold:
+                return False
+
+        return True
+```
+wasn't a good way of voting.
