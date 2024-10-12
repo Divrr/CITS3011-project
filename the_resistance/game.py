@@ -31,6 +31,7 @@ class Game:
             spy = random.randrange(self.num_players)
             if spy not in self.spies:
                 self.spies.append(spy)
+        # print(self.spies)
         #start game for each agent        
         for agent_id in range(self.num_players):
             spy_list = self.spies.copy() if agent_id in self.spies else []

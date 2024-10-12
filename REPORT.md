@@ -26,3 +26,5 @@ We pick and vote for the players who we trust most.
 Why multi-agent mapping was not necessary.
 Realising 1 is not a good 'probability'. The better starting probability is 1/(n-1 choose num_spies)
 How to calculate odds
+
+explain that you always want to pick the most trusted crew. 
