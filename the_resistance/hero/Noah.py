@@ -36,22 +36,18 @@ class Noah(Agent):
             self.possible_worlds = {world: 0 if self.id in world else 1 for world in combinations(self.players, s)}
         
         self.normalize()
-        # print("\n".join([f"{world}: {prob}" for world, prob in self.possible_worlds.items()]))
 
     def propose_mission(self, team_size, betrayals_required):
-        choices = sorted([p for p in self.players], key=lambda p: self.spy_probability(p))
-        # print(f"(agent {self.id}) CHOICES: {choices}")
-        return choices[:team_size]
-        # top_trusted = sorted([p for p in self.players], key=lambda p: self.spy_probability(p))
-        # if self.spy:
-        #     spies = [player for player in top_trusted if player in self.spies and player != self.id]
-        #     non_spies = [player for player in top_trusted if player not in self.spies and player != self.id]
-        #     choice = [self.id] + spies[:betrayals_required-1] + non_spies[:team_size - len(spies)+ 1]
-        # else:
-        #     choice = top_trusted[:team_size]
+        top_trusted = sorted([p for p in self.players], key=lambda p: self.spy_probability(p))
+        if self.spy:
+            spies = [player for player in top_trusted if player in self.spies and player != self.id]
+            non_spies = [player for player in top_trusted if player not in self.spies and player != self.id]
+            choice = [self.id] + spies[:betrayals_required-1] + non_spies[:team_size - len(spies)+ 1]
+        else:
+            choice = top_trusted[:team_size]
         
-        # random.shuffle(choice)
-        # return choice
+        random.shuffle(choice)
+        return choice
 
     def vote(self, mission, proposer, betrayals_required):
         return True

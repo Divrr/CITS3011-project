@@ -3,7 +3,7 @@ import random
 from itertools import combinations
 import math
 
-class NoahCopyCopy(Agent):
+class Noah2(Agent):
     def __init__(self, name):
         self.name = name
 
@@ -30,13 +30,9 @@ class NoahCopyCopy(Agent):
         self.spy = True if self.spies else False
         self.id = player_number
 
-        if self.spy:
-            self.possible_worlds = {world: 1 if self.id in world else 0 for world in combinations(self.players, s)}
-        else:
-            self.possible_worlds = {world: 0 if self.id in world else 1 for world in combinations(self.players, s)}
+        self.possible_worlds = {world: 0 if self.id in world else 1 for world in combinations(self.players, s)}
         
         self.normalize()
-        # print("\n".join([f"{world}: {prob}" for world, prob in self.possible_worlds.items()]))
 
     def propose_mission(self, team_size, betrayals_required):
         top_trusted = sorted([p for p in self.players], key=lambda p: self.spy_probability(p))
@@ -51,10 +47,13 @@ class NoahCopyCopy(Agent):
         return choice
 
     def vote(self, mission, proposer, betrayals_required):
+        if self.spy:
+            count = sum([1 for teammate in self.spies if teammate in mission])
+            return count == betrayals_required
+        
         spy_threshold = sum(self.spy_probability(p) for p in mission) / len(mission)
         if self.spy_probability(proposer) > spy_threshold:
             return False
-
         for member in mission:
             if self.spy_probability(member) > spy_threshold:
                 return False
