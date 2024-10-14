@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from matplotlib.table import Table
 import colorsys
+import time
 
 # =============================
 
@@ -58,6 +59,7 @@ def run_tournament(agent_file, agent_name, contestants):
     result = subprocess.run(["python3", judge], input=str(NUM_PLAYS)+"\n", capture_output=True, text=True, check=False)
     stdout = result.stdout
     stderr = result.stderr
+
     print(stdout)
     coming = False
     total_winrate, res_win_rate, spy_win_rate, ranking = 0, 0, 0, 0
@@ -115,6 +117,7 @@ for contestants in combinations:
     avg_winrates = []
 
     for idx, (agent_file, agent_name) in enumerate(zip(agent_files, agent_names)):
+        start = time.time()
         rankings, winrates = get_distribution(agent_file, agent_name, contestants)
         total_winrates, res_win_rates, spy_win_rates = winrates
 
@@ -128,6 +131,7 @@ for contestants in combinations:
         plt.hist(spy_win_rates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Spy Winrate', range=(0, 1), color=spy_color)
 
         avg_winrates.append([agent_name, np.mean(total_winrates), np.mean(res_win_rates), np.mean(spy_win_rates), np.mean(rankings)])
+        print(f'{agent_name} took {time.time() - start:.2f} seconds')
 
     plt.axvline(0.5, color='purple', linestyle='dotted', linewidth=1, label='50% Winrate')
 

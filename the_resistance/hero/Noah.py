@@ -31,7 +31,7 @@ class Noah(Agent):
         self.id = player_number
 
         if self.spy:
-            self.possible_worlds = {world: 1 if self.id in world else 0 for world in combinations(self.players, s)}
+            self.possible_worlds = {world: 1 for world in combinations(self.players, s)}
         else:
             self.possible_worlds = {world: 0 if self.id in world else 1 for world in combinations(self.players, s)}
         
@@ -50,6 +50,17 @@ class Noah(Agent):
         return choice
 
     def vote(self, mission, proposer, betrayals_required):
+        if self.spy:
+            count = sum([1 for teammate in self.spies if teammate in mission])
+            return count == betrayals_required
+        
+        spy_threshold = 0.5
+        if self.spy_probability(proposer) > spy_threshold:
+            return False
+        for member in mission:
+            if self.spy_probability(member) > spy_threshold:
+                return False 
+
         return True
 
     def betray(self, mission, proposer, betrayals_required):
@@ -79,10 +90,6 @@ class Noah(Agent):
         self.normalize()
 
     def round_outcome(self, rounds_complete, missions_failed):
-        # print(f"(agent {self.id}) ROUND {rounds_complete} WITH {missions_failed} fails: {"\n".join([f"{world}: {prob}" for world, prob in self.possible_worlds.items()])}")
-        # print(f"(agent {self.id}) ROUND {rounds_complete} WITH {missions_failed} fails")
-        # choices = [(p, round(self.spy_probability(p), 3)) for p in self.players]
-        # print(f"(agent {self.id}) ROUND {rounds_complete} WITH {missions_failed} fails: {choices}")
         pass
 
     def game_outcome(self, spies_win, spies):
