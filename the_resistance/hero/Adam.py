@@ -1,7 +1,7 @@
 from agent import Agent
 import random
 
-class Seth(Agent):
+class Adam(Agent):
     def __init__(self, name):
         self.name = name
 
@@ -20,6 +20,8 @@ class Seth(Agent):
         self.spy = True if self.spies else False
 
         self.votes = []
+        self.round_no = 1
+        self.missions_failed = 0
 
     def propose_mission(self, team_size, betrayals_required):
         top_trusted = sorted(range(len(self.trust)), key=lambda i: -self.trust[i])
@@ -49,6 +51,17 @@ class Seth(Agent):
         return True
 
     def vote_outcome(self, mission, proposer, votes):
+        voted = self.vote(
+            mission, 
+            proposer, 
+            super().betrayals_required[len(self.players)][self.round_no]
+        )
+
+        for player in self.players:
+            player_voted = player in votes
+            if voted != player_voted:
+                self.trust[player] /= 2
+        
         self.votes = votes
 
     def mission_outcome(self, mission, proposer, num_betrayals, mission_success):
@@ -61,7 +74,8 @@ class Seth(Agent):
         self.trust[self.id] = 1
 
     def round_outcome(self, rounds_complete, missions_failed):
-        pass
+        self.round_no = rounds_complete
+        self.missions_failed = missions_failed
     
     def game_outcome(self, spies_win, spies):
         pass

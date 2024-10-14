@@ -38,10 +38,12 @@ for contestant in os.listdir(sideline):
     if contestant.endswith(".py"):
         contestants.append(contestant)
 
-for i in range(len(contestants)+1):
-    combinations += list(itertools.combinations(contestants, i))
+# for i in range(len(contestants)+1):
+#     combinations += list(itertools.combinations(contestants, i))
 
-combinations.remove(())
+# combinations.remove(())
+
+combinations = [contestants]
 
 # =============================
 
@@ -56,7 +58,7 @@ def run_tournament(agent_file, agent_name, contestants):
     result = subprocess.run(["python3", judge], input=str(NUM_PLAYS)+"\n", capture_output=True, text=True, check=False)
     stdout = result.stdout
     stderr = result.stderr
-
+    print(stdout)
     coming = False
     total_winrate, res_win_rate, spy_win_rate, ranking = 0, 0, 0, 0
     for line in stdout.split("\n"):

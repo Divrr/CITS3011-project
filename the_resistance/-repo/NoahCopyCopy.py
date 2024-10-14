@@ -51,7 +51,7 @@ class NoahCopyCopy(Agent):
         return choice
 
     def vote(self, mission, proposer, betrayals_required):
-        spy_threshold = 0.4
+        spy_threshold = sum(self.spy_probability(p) for p in mission) / len(mission)
         if self.spy_probability(proposer) > spy_threshold:
             return False
 
@@ -62,7 +62,7 @@ class NoahCopyCopy(Agent):
         return True
 
     def betray(self, mission, proposer, betrayals_required):
-        
+        return True
 
     def vote_outcome(self, mission, proposer, votes):
         pass
