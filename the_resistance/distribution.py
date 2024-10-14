@@ -60,7 +60,6 @@ def run_tournament(agent_file, agent_name, contestants):
     stdout = result.stdout
     stderr = result.stderr
 
-    print(stdout)
     coming = False
     total_winrate, res_win_rate, spy_win_rate, ranking = 0, 0, 0, 0
     for line in stdout.split("\n"):

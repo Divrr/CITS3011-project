@@ -3,7 +3,7 @@ import random
 from itertools import combinations
 import math
 
-class Noah(Agent):
+class Noah2(Agent):
     def __init__(self, name):
         self.name = name
 
@@ -13,32 +13,31 @@ class Noah(Agent):
     def __repr__(self):
         return self.__str__()
 
-    def normalize(self):
+    def normalize(self, distribution):
         total = sum(prob for prob in self.possible_worlds.values())
-        for world in self.possible_worlds:
-            self.possible_worlds[world] /= total
-    
-    def spy_probability(self, spy):
-        return sum(prob for world, prob in self.possible_worlds.items() if spy in world)
+        for d in distribution:
+            distribution[d] /= total
+        return distribution
 
     def new_game(self, number_of_players, player_number, spies):
-        n = number_of_players
-        s = super().spy_count[number_of_players]
+        self.n = number_of_players
+        self.s = super().spy_count[self.n]
 
-        self.players = list(range(number_of_players))
+        self.players = list(range(self.n))
         self.spies = spies
         self.spy = True if self.spies else False
         self.id = player_number
 
         if self.spy:
-            self.possible_worlds = {world: 1 for world in combinations(self.players, s)}
+            self.possible_worlds = {world: 1 for world in combinations(self.players, self.s)}
         else:
-            self.possible_worlds = {world: 0 if self.id in world else 1 for world in combinations(self.players, s)}
+            self.possible_worlds = {world: 1 for world in combinations(self.players, self.s) if self.id not in world}
         
-        self.normalize()
+        self.possible_worlds = self.normalize(self.possible_worlds)
+        self.spy_probability = {spy: sum(prob for world, prob in self.possible_worlds.items() if spy in world) for spy in self.players}
 
     def propose_mission(self, team_size, betrayals_required):
-        top_trusted = sorted([p for p in self.players], key=lambda p: self.spy_probability(p))
+        top_trusted = sorted([p for p in self.players], key=lambda p: self.spy_probability[p])
         if self.spy:
             spies = [player for player in top_trusted if player in self.spies and player != self.id]
             non_spies = [player for player in top_trusted if player not in self.spies and player != self.id]
@@ -55,12 +54,11 @@ class Noah(Agent):
             return count == betrayals_required
         
         spy_threshold = 0.5
-        if self.spy_probability(proposer) > spy_threshold:
+        if self.spy_probability[proposer] > spy_threshold:
             return False
         for member in mission:
-            if self.spy_probability(member) > spy_threshold:
-                return False 
-
+            if self.spy_probability[member] > spy_threshold:
+                return False
         return True
 
     def betray(self, mission, proposer, betrayals_required):
@@ -70,24 +68,49 @@ class Noah(Agent):
         pass
 
     def mission_outcome(self, mission, proposer, num_betrayals, mission_success):
-        for world in self.possible_worlds:
+        worlds = self.possible_worlds.copy()
+        for world in worlds:
             # assuming this world contains the set of spies, how many were in the mission?
             num_spies_on_mission = sum(1 for agent in world if agent in mission)
 
             if not mission_success:
                 # Discard any world that does not include at least num_betrayals spies in it that were in the mission
                 if num_spies_on_mission < num_betrayals:
-                    self.possible_worlds[world] = 0
+                    del self.possible_worlds[world]
+                    continue
 
-            likelihood = 0
-            if mission_success:
-                likelihood = 0.1 if num_spies_on_mission else 0.9
-            else: 
-                likelihood = 0.9 if num_spies_on_mission else 0.1
-            
-            self.possible_worlds[world] = likelihood * self.possible_worlds[world]
+            # P(spyA and spyB | fail)
+            # = P(spyA|fail)P(spyB|fail)
+            # = (P(fail | spyA) P(spyA) / P(fail))(P(fail | spyB) P(spyB) / P(fail))
+            # P(fail | spyA) = 0.9
+            # P(spA) = previous probability
+            # P(fail) = P(fail | spyA)P(spyA) + P(fail | not spyA)P(not spyA)
+            # P(fail | not spyA) = 0.1
+            # P(not spyA) = 1 - P(spyA)
+
+
+            p_world_given_outcome = 1
+            for member in world:
+                if member in mission:
+                    if mission_success:
+                        p_outcome_given_spy = 0.1
+                        p_outcome_given_not_spy = 1
+                    else:
+                        p_outcome_given_spy = 0.9
+                        p_outcome_given_not_spy = 0
+
+                    p_spy = self.spy_probability[member]
+                    p_not_spy = 1 - p_spy
+                    
+                    p_outcome = p_outcome_given_spy * p_spy + p_outcome_given_not_spy * p_not_spy
+                    p_spy_given_outcome = p_outcome_given_spy * p_spy / p_outcome
+
+                    p_world_given_outcome *= p_spy_given_outcome
+
+            self.possible_worlds[world] *= p_world_given_outcome
         
-        self.normalize()
+        self.possible_worlds = self.normalize(self.possible_worlds)
+        self.spy_probability = {spy: sum(prob for world, prob in self.possible_worlds.items() if spy in world) for spy in self.players}
 
     def round_outcome(self, rounds_complete, missions_failed):
         pass
