@@ -1,10 +1,12 @@
 import subprocess, os, time, itertools, shutil
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from matplotlib.table import Table
 import colorsys
 import time
+import seaborn as sns
 
 # =============================
 
@@ -98,8 +100,8 @@ def get_distribution(agent_file, agent_name, contestants):
 # =============================
 
 # List all agent files in the hero directory
-agent_files = [f for f in os.listdir(hero) if f.endswith(".py")]
-agent_names = [os.path.splitext(f)[0] for f in agent_files]  # Extract agent names from filenames
+agent_names = ["RandomAgent", "BasicAgent", "SatisfactoryAgent", "Adam", "Seth", "Noah"]
+agent_files = [f"{name}.py" for name in agent_names]
 import matplotlib.colors as mcolors
 
 # Generate a list of base colors
@@ -112,39 +114,65 @@ def adjust_color_hue(color, factor):
     return colorsys.hsv_to_rgb(*adjusted_hsv)
 
 for contestants in combinations:
-    plt.figure(figsize=(10, 6))
+    winrate_data = []
     avg_winrates = []
-
     for idx, (agent_file, agent_name) in enumerate(zip(agent_files, agent_names)):
         start = time.time()
         rankings, winrates = get_distribution(agent_file, agent_name, contestants)
         total_winrates, res_win_rates, spy_win_rates = winrates
 
-        base_color = base_colors[idx % len(base_colors)]  # Cycle through base colors
-        total_color = adjust_color_hue(base_color, 0.00)  # No hue adjustment for total winrate
-        res_color = adjust_color_hue(base_color, -0.02)    # Slight hue adjustment for resistance winrate
-        spy_color = adjust_color_hue(base_color, 0.02)    # Slight hue adjustment for spy winrate
-
-        plt.hist(total_winrates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Total Winrate', range=(0, 1), color=total_color)
-        plt.hist(res_win_rates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Resistance Winrate', range=(0, 1), color=res_color)
-        plt.hist(spy_win_rates, bins=NUM_HIST_BINS, edgecolor='black', alpha=0.5, label=f'{agent_name} Spy Winrate', range=(0, 1), color=spy_color)
+        # Store data for the violin plot (long-form DataFrame)
+        for tw, rw, sw in zip(total_winrates, res_win_rates, spy_win_rates):
+            winrate_data.append([agent_name, 'Total', tw])
+            winrate_data.append([agent_name, 'Resistance', rw])
+            winrate_data.append([agent_name, 'Spy', sw])
 
         avg_winrates.append([agent_name, np.mean(total_winrates), np.mean(res_win_rates), np.mean(spy_win_rates), np.mean(rankings)])
         print(f'{agent_name} took {time.time() - start:.2f} seconds')
 
-    plt.axvline(0.5, color='purple', linestyle='dotted', linewidth=1, label='50% Winrate')
+    # Convert the data to a DataFrame for seaborn
+    df = pd.DataFrame(winrate_data, columns=['Agent', 'Role', 'Winrate'])
 
+    # Create the violin plot
+    plt.figure(figsize=(10, 6))
+    sns.violinplot(x='Agent', y='Winrate', hue='Role', data=df, split=True, palette={'Total': '#5DADE2', 'Resistance': '#28B463', 'Spy': '#CB4335'})
+
+    # Add a horizontal line for the 50% winrate
+    plt.axhline(0.5, color='purple', linestyle='dotted', linewidth=1, label='50% Winrate')
+
+    # Set plot labels and title
     plt.title(f'Winrates against {", ".join([contestant.rstrip(".py") for contestant in contestants])}', fontsize=10)
-    plt.xlabel('Winrate')
-    plt.ylabel('Frequency')
+    plt.xlabel('Agent')
+    plt.ylabel('Winrate')
 
-    # Add legends for winrates and ranks
-    winrate_legend = "\n".join([f'{agent_name}: Total={total:.2f}, Res={res:.2f}, Spy={spy:.2f}' for agent_name, total, res, spy, _ in avg_winrates])
-    rank_legend = "\n".join([f'{agent_name}: Avg Rank={rank:.2f}' for agent_name, _, _, _, rank in avg_winrates])
-    plt.figtext(0.99, 0.01, winrate_legend, horizontalalignment='right', fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
-    plt.figtext(0.01, 0.01, rank_legend, horizontalalignment='left', fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
+    # Adjust legend and save the plot
+    plt.legend(loc='upper left')
+    plt.savefig(os.path.join(png_dir, f'violin_comparison_{"_".join([agent_name for agent_name in agent_names])}_against_{"_".join(contestants)}.png'))
+    plt.close()
 
-    plt.legend(loc='upper right')
+    # Create a DataFrame for the average winrates
+    avg_df = pd.DataFrame(avg_winrates, columns=['Agent', 'Avg Total Winrate', 'Avg Resistance Winrate', 'Avg Spy Winrate', 'Avg Rank'])
 
-    plt.savefig(os.path.join(png_dir, f'comparison_{"_".join([agent_name for agent_name in agent_names])}_against_{"_".join(contestants)}.png'))
+    # Create a table plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.axis('tight')
+    ax.axis('off')
+    table = Table(ax, bbox=[0, 0, 1, 1])
+
+    # Add table headers
+    ncols = len(avg_df.columns)
+    nrows = len(avg_df) + 1
+    width, height = 1.0 / ncols, 1.0 / nrows
+
+    for i, column in enumerate(avg_df.columns):
+        table.add_cell(0, i, width, height, text=column, loc='center', facecolor='lightgrey')
+
+    # Add table data
+    for i, row in avg_df.iterrows():
+        for j, cell in enumerate(row):
+            table.add_cell(i + 1, j, width, height, text=cell, loc='center', facecolor='white')
+
+    ax.add_table(table)
+    plt.title('Average Winrates and Rankings')
+    plt.savefig(os.path.join(png_dir, f'avg_winrates_table_{"_".join([agent_name for agent_name in agent_names])}_against_{"_".join(contestants)}.png'))
     plt.close()

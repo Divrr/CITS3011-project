@@ -1,0 +1,7 @@
+Agent,Avg Total Winrate,Avg Resistance Winrate,Avg Spy Winrate,Avg Ranking
+RandomAgent,0.1765,0.0,0.3,4.0
+BasicAgent,0.25,0.125,0.75,4.0
+SatisfactoryAgent,0.5714,0.3333,0.75,2.0
+Adam,0.5,0.2857,1.0,2.0
+Seth,0.4348,0.0,1.0,3.0
+Noah,0.4762,0.3333,0.6667,2.0
