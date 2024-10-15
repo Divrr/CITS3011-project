@@ -3,7 +3,7 @@ import random
 from itertools import combinations
 import math
 
-class Noah2(Agent):
+class Noah(Agent):
     def __init__(self, name):
         self.name = name
 
@@ -15,6 +15,10 @@ class Noah2(Agent):
 
     def normalize(self, distribution):
         total = sum(prob for prob in self.possible_worlds.values())
+        
+        if total == 0:
+            return distribution
+        
         for d in distribution:
             distribution[d] /= total
         return distribution
@@ -25,23 +29,22 @@ class Noah2(Agent):
 
         self.players = list(range(self.n))
         self.spies = spies
-        self.spy = True if self.spies else False
-        self.id = player_number
 
-        if self.spy:
-            self.possible_worlds = {world: 1 for world in combinations(self.players, self.s)}
-        else:
-            self.possible_worlds = {world: 1 for world in combinations(self.players, self.s) if self.id not in world}
+        self.id = player_number
+        self.spy = True if self.spies else False
+
+        self.possible_worlds = {world: 1 for world in combinations(self.players, self.s) if self.id not in world}
         
         self.possible_worlds = self.normalize(self.possible_worlds)
-        self.spy_probability = {spy: sum(prob for world, prob in self.possible_worlds.items() if spy in world) for spy in self.players}
+        self.trust = {spy: sum(prob for world, prob in self.possible_worlds.items() if spy in world) for spy in self.players}
 
     def propose_mission(self, team_size, betrayals_required):
-        top_trusted = sorted([p for p in self.players], key=lambda p: self.spy_probability[p])
+        top_trusted = sorted(range(len(self.trust)), key=lambda i: self.trust[i])
+        print(self.id, self.trust)
         if self.spy:
-            spies = [player for player in top_trusted if player in self.spies and player != self.id]
-            non_spies = [player for player in top_trusted if player not in self.spies and player != self.id]
-            choice = [self.id] + spies[:betrayals_required-1] + non_spies[:team_size - len(spies)+ 1]
+            spies = [player for player in top_trusted if player in self.spies]
+            non_spies = [player for player in top_trusted if player not in self.spies]
+            choice = spies[:betrayals_required] + non_spies[:team_size - betrayals_required]
         else:
             choice = top_trusted[:team_size]
         
@@ -52,14 +55,14 @@ class Noah2(Agent):
         if self.spy:
             count = sum([1 for teammate in self.spies if teammate in mission])
             return count == betrayals_required
-        
-        spy_threshold = 0.5
-        if self.spy_probability[proposer] > spy_threshold:
-            return False
-        for member in mission:
-            if self.spy_probability[member] > spy_threshold:
+        else:
+            spy_threshold = 0.5
+            if self.trust[proposer] > spy_threshold:
                 return False
-        return True
+            for player in mission:
+                if self.trust[player] > spy_threshold:
+                    return False
+            return True
 
     def betray(self, mission, proposer, betrayals_required):
         return True
@@ -99,7 +102,7 @@ class Noah2(Agent):
                         p_outcome_given_spy = 0.9
                         p_outcome_given_not_spy = 0
 
-                    p_spy = self.spy_probability[member]
+                    p_spy = self.trust[member]
                     p_not_spy = 1 - p_spy
                     
                     p_outcome = p_outcome_given_spy * p_spy + p_outcome_given_not_spy * p_not_spy
@@ -110,7 +113,7 @@ class Noah2(Agent):
             self.possible_worlds[world] *= p_world_given_outcome
         
         self.possible_worlds = self.normalize(self.possible_worlds)
-        self.spy_probability = {spy: sum(prob for world, prob in self.possible_worlds.items() if spy in world) for spy in self.players}
+        self.trust = {spy: sum(prob for world, prob in self.possible_worlds.items() if spy in world) for spy in self.players}
 
     def round_outcome(self, rounds_complete, missions_failed):
         pass

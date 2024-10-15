@@ -2,7 +2,7 @@ from agent import Agent
 import random
 from itertools import combinations
 
-class Noah(Agent):
+class Seth(Agent):
     def __init__(self, name):
         self.name = name
 
