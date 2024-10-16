@@ -19,22 +19,21 @@ class Noah(Agent):
     def __repr__(self):
         return self.__str__()
 
-    def normalize(self, distribution):
-        total = sum(prob for prob in distribution.values())
+    def normalize(self):
+        total = sum(prob for prob in self.possible_worlds.values())
         
         if total == 0:
-            return distribution
+            return self.possible_worlds
         
-        for d in distribution:
-            distribution[d] /= total
-        return distribution
+        for d in self.possible_worlds:
+            self.possible_worlds[d] /= total
 
-    def update_trust(self):
-        trust_counts = {player: 0 for player in self.players}
+    def update_suspicion(self):
+        suspicion_counts = {player: 0 for player in self.players}
         for world, prob in self.possible_worlds.items():
             for player in world:
-                trust_counts[player] += prob
-        self.trust = trust_counts
+                suspicion_counts[player] += prob
+        self.suspicion = suspicion_counts
 
     def new_game(self, number_of_players, player_number, spies):
         self.n = number_of_players
@@ -48,14 +47,14 @@ class Noah(Agent):
 
         self.possible_worlds = {world: 1 for world in combinations(self.players, self.s) if self.id not in world}
         
-        self.possible_worlds = self.normalize(self.possible_worlds)
-        self.update_trust()
+        self.normalize()
+        self.update_suspicion()
 
         self.round_no = 1
         self.missions_failed = 0
 
     def propose_mission(self, team_size, betrayals_required):
-        top_trusted = sorted(self.trust.keys(), key=lambda player: (self.trust[player], random.random()))
+        top_trusted = sorted(range(self.n), key=lambda player: (self.suspicion[player], random.random()))
         if self.spy:
             spies = [player for player in top_trusted if player in self.spies]
             non_spies = [player for player in top_trusted if player not in self.spies]
@@ -71,10 +70,10 @@ class Noah(Agent):
             count = sum([1 for teammate in self.spies if teammate in mission])
             return count == betrayals_required
         else:
-            if self.trust[proposer] > SPY_THRESHOLD:
+            if self.suspicion[proposer] > SPY_THRESHOLD:
                 return False
             for player in mission:
-                if self.trust[player] > SPY_THRESHOLD:
+                if self.suspicion[player] > SPY_THRESHOLD:
                     return False
             return True
 
@@ -117,8 +116,8 @@ class Noah(Agent):
                     p_spy_given_outcome = calculate_p_spy_given_outcome(
                         P_MISSION_SUCCESS_GIVEN_SPY if mission_success else P_MISSION_FAIL_GIVEN_SPY,
                         P_MISSION_SUCCESS_GIVEN_RES if mission_success else P_MISSION_FAIL_GIVEN_RES,
-                        self.trust[member],
-                        1 - self.trust[member]
+                        self.suspicion[member],
+                        1 - self.suspicion[member]
                     )
                     p_world_given_outcome *= p_spy_given_outcome
 
@@ -127,8 +126,8 @@ class Noah(Agent):
         for world in worlds_to_delete:
             del self.possible_worlds[world]
         
-        self.possible_worlds = self.normalize(self.possible_worlds)
-        self.update_trust()
+        self.normalize()
+        self.update_suspicion()
 
     def round_outcome(self, rounds_complete, missions_failed):
         self.round_no = rounds_complete
